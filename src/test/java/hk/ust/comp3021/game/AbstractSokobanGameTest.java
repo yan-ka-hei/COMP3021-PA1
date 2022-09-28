@@ -3,13 +3,12 @@ package hk.ust.comp3021.game;
 import hk.ust.comp3021.actions.Action;
 import hk.ust.comp3021.actions.ActionResult;
 import hk.ust.comp3021.actions.Move;
-import hk.ust.comp3021.entities.Box;
 import hk.ust.comp3021.utils.TestHelper;
 import hk.ust.comp3021.utils.TestKind;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 class AbstractSokobanGameTest {

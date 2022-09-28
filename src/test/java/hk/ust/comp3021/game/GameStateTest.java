@@ -2,7 +2,6 @@ package hk.ust.comp3021.game;
 
 import hk.ust.comp3021.entities.Box;
 import hk.ust.comp3021.entities.Empty;
-import hk.ust.comp3021.entities.Player;
 import hk.ust.comp3021.utils.TestHelper;
 import hk.ust.comp3021.utils.TestKind;
 import org.junit.jupiter.api.Tag;
@@ -57,7 +56,7 @@ class GameStateTest {
             #..a@#
             ######
             """
-        )) ;
+        ));
 
         gameState.move(Position.of(1, 1), Position.of(2, 1));
         assertEquals(Position.of(2, 1), gameState.getPlayerPositionById(0));
@@ -80,7 +79,6 @@ class GameStateTest {
 
         assertEquals(Position.of(3, 1), gameState.getPlayerPositionById(0));
         assertInstanceOf(Box.class, gameState.getEntity(Position.of(4, 1)));
-        assertInstanceOf(Player.class, gameState.getEntity(Position.of(3, 1)));
     }
 
     @Tag(TestKind.PUBLIC)
