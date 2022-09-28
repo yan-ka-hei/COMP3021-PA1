@@ -6,8 +6,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
+
+import java.lang.IllegalArgumentException;
+
 
 /**
  * A Sokoban game board.
@@ -32,9 +34,32 @@ public class GameMap {
      *                     0 means undo is not allowed.
      *                     -1 means unlimited. Other negative numbers are not allowed.
      */
+    protected int maxWidth;
+    protected int maxHeight;
+    protected HashSet<Position> destinations;
+    protected int undoLimit;
+
+    private ArrayList<Position> walls;
+
+    private ArrayList<Integer> init_player;
+
+    private ArrayList<Position> init_player_loc;
+
+    private ArrayList<Integer> init_box;
+
+    private ArrayList<Position> init_box_loc;
+
+    private ArrayList<Position> effective_loc;
+
     public GameMap(int maxWidth, int maxHeight, Set<Position> destinations, int undoLimit) {
-        // TODO
-        throw new NotImplementedException();
+        //TODO
+        this.maxWidth = maxWidth;
+        this.maxHeight = maxHeight;
+        this.destinations = new HashSet<Position>();
+        for (Position i:destinations){
+            this.destinations.add(i);
+        }
+        this.undoLimit = undoLimit;
     }
 
     /**
@@ -73,8 +98,130 @@ public class GameMap {
      *                                  or if there are players that have no corresponding boxes.
      */
     public static GameMap parse(String mapText) {
-        // TODO
-        throw new NotImplementedException();
+        //TODO
+        String[] extract = mapText.split("\n", 2);
+        String number = "";
+        for (char num:extract[0].toCharArray()){
+            if (num >= '0' && num <= '9'){
+                number = number + num;
+            }
+        }
+        System.out.println(number.length());
+        int limit = Integer.parseInt(number);
+        String map = extract[1];
+        if (limit < -1){
+            throw new IllegalArgumentException();
+        }
+        ArrayList<Character> check = new ArrayList<Character>();
+        int box_num = 0;
+        int box_dest_num = 0;
+        String[] lines = map.split("\n");
+        int height = lines.length;
+        HashSet<Position> dest_set = new HashSet<Position>();
+        ArrayList<Position> walls_set = new ArrayList<Position>();
+        ArrayList<Integer> init_player_set = new ArrayList<Integer>();
+        ArrayList<Position> init_player_loc_set= new ArrayList<Position>();
+        ArrayList<Integer> init_box_set = new ArrayList<Integer>();
+        ArrayList<Position> init_box_loc_set = new ArrayList<Position>();
+        ArrayList<Position> init_effective_loc = new ArrayList<Position>();
+
+        int width = -1;
+
+        for (int k = 0; k < height; k++) {
+            char[] line = lines[k].toCharArray();
+            boolean start = false;
+            int counter = 0;
+            for (int i = 0; i < line.length; i++) {
+                if (line[i]!=' '){
+                    start = true;
+                }
+                if (line[i]==' ') {
+                    boolean substring_all_spaces = true;
+                    for (int j = i; j <line.length; j++){
+                        if (line[j]!=' '){
+                            substring_all_spaces = false;
+                        }
+                    }
+                    if (substring_all_spaces == false){
+                        start =false;
+                    }
+                }
+                if (start){
+                    counter++;
+                }
+                if (line[i] >= 'A' && line[i] <= 'Z' && check.indexOf(line[i]) == -1) {
+                    init_player_set.add(Character.getNumericValue(line[i])-Character.getNumericValue('A'));
+                    init_player_loc_set.add(Position.of(i, k));
+                    check.add(line[i]);
+                    init_effective_loc.add(Position.of(i,k));
+                } else if (line[i] >= 'A' && line[i] <= 'Z' && check.indexOf(line[i]) != -1) {
+                    throw new IllegalArgumentException();
+                }
+                if (line[i] == '@') {
+                    box_dest_num++;
+                    dest_set.add(Position.of(i, k));
+                    init_effective_loc.add(Position.of(i,k));
+                }
+                if (line[i] >= 'a' && line[i] <= 'z') {
+                    box_num++;
+                    init_box_set.add(Character.getNumericValue(line[i])-Character.getNumericValue('a'));
+                    init_box_loc_set.add(Position.of(i, k));
+                    init_effective_loc.add(Position.of(i,k));
+                }
+
+                if (line[i] == '#') {
+                    walls_set.add(Position.of(i, k));
+                }
+                if (line[i] == '.'){
+                    init_effective_loc.add(Position.of(i,k));
+                }
+            }
+            if (counter > width){
+                width = counter;
+            }
+        }
+        for (int k = 0; k < height; k++) {
+            char[] line = lines[k].toCharArray();
+            for (int i = 0; i < line.length; i++) {
+                if (line[i] >= 'a' && line[i] <= 'z' && check.indexOf(Character.toUpperCase(line[i])) == -1){
+                    throw new IllegalArgumentException();
+                }
+            }
+        }
+        if (box_num!=box_dest_num){
+            throw new IllegalArgumentException();
+        }
+        if (check.size()==0){
+            throw new IllegalArgumentException();
+        }
+        for (char i: check){
+            if (mapText.contains(String.valueOf(Character.toLowerCase(i)))==false){
+                throw new IllegalArgumentException();
+            }
+        }
+        ArrayList<Position> player_pos_sort = new ArrayList<Position>();
+        for (int i = 0;i<init_player_set.size()-1;i++){
+            for (int k = i+1; k < init_player_set.size();k++){
+                if (init_player_set.get(i)>init_player_set.get(k)){
+                    int temp_player = init_player_set.get(i);
+                    init_player_set.set(i, init_player_set.get(k));
+                    init_player_set.set(k, temp_player);
+                    Position temp_loc = init_player_loc_set.get(i);
+                    init_player_loc_set.set(i, init_player_loc_set.get(k));
+                    init_player_loc_set.set(k, temp_loc);
+                }
+            }
+        }
+
+        GameMap game_map = new GameMap(width, height, dest_set, limit);
+        game_map.init_player_loc = init_player_loc_set;
+        game_map.init_player = init_player_set;
+        game_map.init_box = init_box_set;
+        game_map.init_box_loc = init_box_loc_set;
+        game_map.walls = walls_set;
+        game_map.effective_loc = init_effective_loc;
+
+        return game_map;
     }
 
     /**
@@ -85,8 +232,19 @@ public class GameMap {
      */
     @Nullable
     public Entity getEntity(Position position) {
-        // TODO
-        throw new NotImplementedException();
+        if (init_box_loc.contains(position)){
+            return new Box(init_box.get(init_box_loc.indexOf(position)));
+        }
+        else if (init_player_loc.contains(position)){
+            return new Player(init_player.get(init_player_loc.indexOf(position)));
+        }
+        else if (walls.contains(position)){
+            return new Wall();
+        }
+        else if(effective_loc.contains(position)){
+            return new Empty();
+        }
+        return null;
     }
 
     /**
@@ -96,8 +254,21 @@ public class GameMap {
      * @param entity   the entity to put into game map.
      */
     public void putEntity(Position position, Entity entity) {
-        // TODO
-        throw new NotImplementedException();
+        //TODO
+        switch (entity){
+            case Box o -> {
+                init_box.add(o.getPlayerId());
+                init_player_loc.add(position);
+            }
+            case Player p -> {
+                init_player.add(p.getId());
+                init_player_loc.add(position);
+            }
+            case Wall o -> {
+                walls.add(position);
+            }
+            default ->{}
+            };
     }
 
     /**
@@ -106,8 +277,8 @@ public class GameMap {
      * @return a set of positions.
      */
     public @NotNull @Unmodifiable Set<Position> getDestinations() {
-        // TODO
-        throw new NotImplementedException();
+        //
+        return destinations;
     }
 
     /**
@@ -116,8 +287,8 @@ public class GameMap {
      * @return undo limit.
      */
     public Optional<Integer> getUndoLimit() {
-        // TODO
-        throw new NotImplementedException();
+        //TODO
+        return Optional.of(undoLimit);
     }
 
     /**
@@ -126,8 +297,12 @@ public class GameMap {
      * @return a set of player id.
      */
     public Set<Integer> getPlayerIds() {
-        // TODO
-        throw new NotImplementedException();
+        //TODO
+        HashSet<Integer> player = new HashSet<Integer>();
+        for (int i:init_player){
+            player.add(i);
+        }
+        return player;
     }
 
     /**
@@ -136,8 +311,8 @@ public class GameMap {
      * @return maximum width.
      */
     public int getMaxWidth() {
-        // TODO
-        throw new NotImplementedException();
+        //TODO
+        return maxWidth;
     }
 
     /**
@@ -146,7 +321,31 @@ public class GameMap {
      * @return maximum height.
      */
     public int getMaxHeight() {
-        // TODO
-        throw new NotImplementedException();
+        //TODO
+        return maxHeight;
+    }
+
+    public ArrayList<Integer> getInit_box() {
+        return init_box;
+    }
+
+    public ArrayList<Position> getInit_box_loc() {
+        return init_box_loc;
+    }
+
+    public ArrayList<Integer> getInit_player() {
+        return init_player;
+    }
+
+    public ArrayList<Position> getInit_player_loc() {
+        return init_player_loc;
+    }
+
+    public ArrayList<Position> getWalls() {
+        return walls;
+    }
+
+    public ArrayList<Position> getEffective_loc() {
+        return effective_loc;
     }
 }

@@ -1,6 +1,9 @@
 package hk.ust.comp3021.tui;
 
 
+import hk.ust.comp3021.actions.Action;
+import hk.ust.comp3021.actions.ActionResult;
+import hk.ust.comp3021.actions.Exit;
 import hk.ust.comp3021.game.AbstractSokobanGame;
 import hk.ust.comp3021.game.GameState;
 import hk.ust.comp3021.game.InputEngine;
@@ -32,12 +35,31 @@ public class TerminalSokobanGame extends AbstractSokobanGame {
         this.renderingEngine = renderingEngine;
         // TODO
         // Check the number of players
-        throw new NotImplementedException();
+        if (gameState.getAllPlayerPositions().size() > 2){
+            throw new IllegalArgumentException();
+        }
     }
 
     @Override
     public void run() {
         // TODO
-        throw new NotImplementedException();
+        renderingEngine.message("Sokoban game is ready.\n");
+        renderingEngine.render(state);
+        renderingEngine.message("\nUndo Quota: "+String.valueOf(state.getUndoQuota().orElse(0))+"\n");
+        while (true){
+            var action = processAction(inputEngine.fetchAction());
+            switch (action){
+                case ActionResult.Failed fail -> renderingEngine.message(fail.getReason());
+                case default -> {}
+            }
+            renderingEngine.render(state);
+            renderingEngine.message("\nUndo Quota: "+String.valueOf(state.getUndoQuota().orElse(0))+"\n");
+            if (action.getAction() instanceof Exit || shouldStop()){
+                renderingEngine.message("Game exits.\n");
+                break;
+            }
+        }
+
+
     }
 }

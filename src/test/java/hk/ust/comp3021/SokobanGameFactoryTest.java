@@ -37,5 +37,16 @@ class SokobanGameFactoryTest {
         assertEquals(233, gameMap.getUndoLimit().orElse(null));
     }
 
+    @Tag(TestKind.PUBLIC)
+    @Test
+    void testReadFromFile() throws IOException {
+        final var mapFile = Path.of("G:\\My Drive\\year_3_fall\\comp3021\\pa1\\COMP3021-F22-PA-Student-Version\\src\\main\\resources\\map00.map");
+
+        final var gameMap = SokobanGameFactory.loadGameMap(mapFile);
+        assertEquals(6, gameMap.getMaxWidth());
+        assertEquals(7, gameMap.getMaxHeight());
+        assertEquals(233, gameMap.getUndoLimit().orElse(null));
+    }
+
 
 }

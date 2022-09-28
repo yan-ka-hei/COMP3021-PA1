@@ -1,13 +1,18 @@
 package hk.ust.comp3021.game;
 
-import hk.ust.comp3021.entities.Entity;
+import hk.ust.comp3021.entities.*;
 import hk.ust.comp3021.utils.NotImplementedException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
+import java.io.PipedOutputStream;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.ArrayList;
+
+
 
 /**
  * The state of the Sokoban Game.
@@ -23,15 +28,36 @@ import java.util.Set;
  */
 public class GameState {
 
+    private GameMap map;
+    private ArrayList<Position> player_loc;
+    private ArrayList<Integer> player;
+    private ArrayList<Position> box_loc;
+    private ArrayList<Integer> box;
+    private int undo;
+
+    private ArrayList<ArrayList<Position>> move_history;
+    private ArrayList<ArrayList<Position>> checkpoint;
+    private ArrayList<Position> effective_loc;
+
     /**
      * Create a running game state from a game map.
      *
      * @param map the game map from which to create this game state.
      */
     public GameState(@NotNull GameMap map) {
-        // TODO
-        throw new NotImplementedException();
+        this.map = map;
+        player_loc = map.getInit_player_loc();
+        player = map.getInit_player();
+        undo = map.getUndoLimit().get();
+        box = map.getInit_box();
+        box_loc = map.getInit_box_loc();
+        effective_loc = map.getEffective_loc();
+        move_history = new ArrayList<ArrayList<Position>>();
+        checkpoint = new ArrayList<ArrayList<Position>>();
     }
+
+    public GameState(){}
+
 
     /**
      * Get the current position of the player with the given id.
@@ -41,7 +67,11 @@ public class GameState {
      */
     public @Nullable Position getPlayerPositionById(int id) {
         // TODO
-        throw new NotImplementedException();
+        if (player.contains(id)) {
+            return player_loc.get(player.indexOf(id));
+        } else {
+            throw new NotImplementedException();
+        }
     }
 
     /**
@@ -51,7 +81,11 @@ public class GameState {
      */
     public @NotNull Set<Position> getAllPlayerPositions() {
         // TODO
-        throw new NotImplementedException();
+       var player_loc_set = new HashSet<Position>();
+       for (Position i: player_loc){
+           player_loc_set.add(i);
+       }
+       return player_loc_set;
     }
 
     /**
@@ -62,7 +96,19 @@ public class GameState {
      */
     public @Nullable Entity getEntity(@NotNull Position position) {
         // TODO
-        throw new NotImplementedException();
+        if (box_loc.contains(position)){
+            return new Box(box.get(box_loc.indexOf(position)));
+        }
+        else if (player_loc.contains(position)){
+            return new Player(player.get(player_loc.indexOf(position)));
+        }
+        else if (map.getEntity(position) instanceof Wall){
+            return new Wall();
+        }
+        else if (effective_loc.contains(position)){
+            return new Empty();
+        }
+        return null;
     }
 
     /**
@@ -73,7 +119,7 @@ public class GameState {
      */
     public @NotNull @Unmodifiable Set<Position> getDestinations() {
         // TODO
-        throw new NotImplementedException();
+        return map.getDestinations();
     }
 
     /**
@@ -85,7 +131,7 @@ public class GameState {
      */
     public Optional<Integer> getUndoQuota() {
         // TODO
-        throw new NotImplementedException();
+        return Optional.of(undo);
     }
 
     /**
@@ -96,7 +142,12 @@ public class GameState {
      */
     public boolean isWin() {
 // TODO
-        throw new NotImplementedException();
+        for (Position dest: getDestinations()){
+            if (box_loc.contains(dest) == false){
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -107,9 +158,21 @@ public class GameState {
      * @param from The current position of the entity to move.
      * @param to   The position to move the entity to.
      */
+
+
     public void move(Position from, Position to) {
         // TODO
-        throw new NotImplementedException();
+        ArrayList<Position> move = new ArrayList<Position>();
+        move.add(from);
+        move.add(to);
+        if (player_loc.contains(from)){
+            player_loc.set(player_loc.indexOf(from), to);
+        }
+        else if (box_loc.contains(from)){
+            box_loc.set(box_loc.indexOf(from), to);
+        }
+
+        move_history.add(move);
     }
 
     /**
@@ -121,8 +184,12 @@ public class GameState {
      * Every undo actions reverts the game state to the last checkpoint.
      */
     public void checkpoint() {
-        // TODO
-        throw new NotImplementedException();
+
+        checkpoint.removeAll(checkpoint);
+        for (ArrayList<Position> check:move_history) {
+            checkpoint.add(check);
+        }
+        move_history.removeAll(move_history);
     }
 
     /**
@@ -134,7 +201,19 @@ public class GameState {
      */
     public void undo() {
         // TODO
-        throw new NotImplementedException();
+        if(undo != 0){
+            for (ArrayList<Position> check : checkpoint) {
+                if (player_loc.contains(check.get(1))) {
+                    player_loc.set(player_loc.indexOf(check.get(1)), check.get(0));
+                } else if (box_loc.contains(check.get(1))) {
+                    box_loc.set(box_loc.indexOf(check.get(1)), check.get(0));
+                }
+            }
+        }
+
+        if (undo > 0){
+            undo--;
+        }
     }
 
     /**
@@ -145,7 +224,7 @@ public class GameState {
      */
     public int getMapMaxWidth() {
         // TODO
-        throw new NotImplementedException();
+        return map.getMaxWidth();
     }
 
     /**
@@ -156,6 +235,6 @@ public class GameState {
      */
     public int getMapMaxHeight() {
         // TODO
-        throw new NotImplementedException();
+        return map.getMaxHeight();
     }
 }

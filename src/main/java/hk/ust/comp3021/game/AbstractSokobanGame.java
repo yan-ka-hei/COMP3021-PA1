@@ -2,8 +2,18 @@ package hk.ust.comp3021.game;
 
 import hk.ust.comp3021.actions.Action;
 import hk.ust.comp3021.actions.ActionResult;
+import hk.ust.comp3021.actions.Move;
+import hk.ust.comp3021.entities.Box;
+import hk.ust.comp3021.entities.Empty;
+import hk.ust.comp3021.entities.Wall;
 import hk.ust.comp3021.utils.NotImplementedException;
 import org.jetbrains.annotations.NotNull;
+
+import hk.ust.comp3021.actions.Exit;
+import hk.ust.comp3021.actions.Undo;
+import hk.ust.comp3021.actions.InvalidInput;
+
+import java.util.Optional;
 
 /**
  * A base implementation of Sokoban Game.
@@ -22,7 +32,10 @@ public abstract class AbstractSokobanGame implements SokobanGame {
      */
     protected boolean shouldStop() {
         // TODO
-        throw new NotImplementedException();
+        if (state.isWin()){
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -31,6 +44,149 @@ public abstract class AbstractSokobanGame implements SokobanGame {
      */
     protected ActionResult processAction(@NotNull Action action) {
         // TODO
-        throw new NotImplementedException();
+        ActionResult result = switch (action){
+            case Move.Down d ->{
+                Position player_pos = state.getPlayerPositionById(d.getInitiator());
+                Position down = Position.of(player_pos.x(), player_pos.y()+1);
+                if (state.getEntity(down) instanceof Wall){
+                    yield new ActionResult.Failed(action,"You hit a wall.\n");
+                }
+                else if(state.getEntity(down) instanceof Box){
+                    Position check = Position.of(player_pos.x(), player_pos.y()+2);
+                    if (state.getEntity(check) instanceof Box || state.getEntity(check) instanceof Wall){
+                        yield new ActionResult.Failed(action,"Failed to push the box.\n");
+                    }
+
+                    else{
+                        state.move(down, Position.of(down.x(), down.y()+1));
+                        state.move(player_pos, Position.of(player_pos.x(), player_pos.y()+1));
+                        state.checkpoint();
+                        System.out.println(state.getEntity(Position.of(down.x(), down.y()+1)));
+                        yield new ActionResult.Success(action);
+                    }
+                }
+
+                else if(state.getAllPlayerPositions().contains(down)){
+                    yield new ActionResult.Failed(action,"You hit another player.\n");
+                }
+
+                else if(state.getEntity(down) instanceof Empty){
+                    state.move(player_pos, Position.of(player_pos.x(), player_pos.y()+1));
+                    state.checkpoint();
+                    yield new ActionResult.Success(action);
+                }
+                else{
+                    yield new ActionResult.Failed(action,"na");
+                }
+            }
+
+            case Move.Left l -> {
+                Position player_pos = state.getPlayerPositionById(l.getInitiator());
+                Position left = Position.of(player_pos.x()-1, player_pos.y());
+                if (state.getEntity(left) instanceof Wall){
+                    yield new ActionResult.Failed(action,"You hit a wall.\n");
+                }
+                else if(state.getEntity(left) instanceof Box){
+                    Position check = Position.of(player_pos.x()-2, player_pos.y());
+                    if (state.getEntity(check) instanceof Box || state.getEntity(check) instanceof Wall){
+                        yield new ActionResult.Failed(action,"Failed to push the box.\n");
+                    }
+                    else{
+                        state.move(left, Position.of(left.x()-1, left.y()));
+                        state.move(player_pos, Position.of(player_pos.x()-1, player_pos.y()));
+                        state.checkpoint();
+                        yield new ActionResult.Success(action);
+                    }
+                }
+                else if(state.getAllPlayerPositions().contains(left)){
+                    yield new ActionResult.Failed(action,"You hit another player.\n");
+                }
+                else if(state.getEntity(left) instanceof Empty){
+                    state.move(player_pos, Position.of(player_pos.x()-1, player_pos.y()));
+                    state.checkpoint();
+                    yield new ActionResult.Success(action);
+                }
+                else{
+                    yield new ActionResult.Failed(action,"na");
+                }
+            }
+
+            case Move.Right r -> {
+                Position player_pos = state.getPlayerPositionById(r.getInitiator());
+                Position right = Position.of(player_pos.x()+1, player_pos.y());
+                if (state.getEntity(right) instanceof Wall){
+                    yield new ActionResult.Failed(action,"You hit a wall.\n");
+                }
+                else if(state.getEntity(right) instanceof Box){
+                    Position check = Position.of(player_pos.x()+2, player_pos.y());
+                    if (state.getEntity(check) instanceof Box || state.getEntity(check) instanceof Wall){
+                        yield new ActionResult.Failed(action,"Failed to push the box.\n");
+                    }
+                    else{
+                        state.move(right, Position.of(right.x()+1, right.y()));
+                        state.move(player_pos, Position.of(player_pos.x()+1, player_pos.y()));
+                        state.checkpoint();
+                        yield new ActionResult.Success(action);
+                    }
+                }
+                else if(state.getAllPlayerPositions().contains(right)){
+                    yield new ActionResult.Failed(action,"You hit another player.\n");
+                }
+                else if(state.getEntity(right) instanceof Empty){
+                    state.move(player_pos, Position.of(player_pos.x()+1, player_pos.y()));
+                    state.checkpoint();
+                    yield new ActionResult.Success(action);
+                }
+                else{
+                    yield new ActionResult.Failed(action,"na");
+                }
+            }
+
+            case Move.Up u ->{
+                Position player_pos = state.getPlayerPositionById(u.getInitiator());
+                Position up = Position.of(player_pos.x(), player_pos.y()-1);
+                if (state.getEntity(up) instanceof Wall){
+                    yield new ActionResult.Failed(action,"You hit a wall.\n");
+                }
+                else if(state.getEntity(up) instanceof Box){
+                    Position check = Position.of(player_pos.x(), player_pos.y()-2);
+                    if (state.getEntity(check) instanceof Box || state.getEntity(check) instanceof Wall){
+                        yield new ActionResult.Failed(action,"Failed to push the box.\n");
+                    }
+                    else{
+                        state.move(up, Position.of(up.x(), up.y()-1));
+                        state.move(player_pos, Position.of(player_pos.x(), player_pos.y()-1));
+                        state.checkpoint();
+                        yield new ActionResult.Success(action);
+                    }
+                }
+                else if(state.getAllPlayerPositions().contains(up)){
+                    yield new ActionResult.Failed(action,"You hit another player.\n");
+                }
+                else if(state.getEntity(up) instanceof Empty){
+                    state.move(player_pos, Position.of(player_pos.x(), player_pos.y()-1));
+                    state.checkpoint();
+                    yield new ActionResult.Success(action);
+                }
+                else{
+                    yield new ActionResult.Failed(action,"na");
+                }
+            }
+
+            case Exit e -> new ActionResult.Success(action);
+
+            case Undo u -> {
+                if (state.getUndoQuota().orElse(0)==0){
+                    yield new ActionResult.Failed(action, "You have run out of your undo quota.\n");
+                }
+                else{
+                    state.undo();
+                    yield new ActionResult.Success(action);
+                }
+            }
+
+            case InvalidInput invalidInput -> new ActionResult.Failed(action,"Invalid Input.\n");
+        };
+        return result;
     }
 }
