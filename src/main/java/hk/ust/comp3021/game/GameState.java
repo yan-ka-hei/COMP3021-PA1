@@ -37,6 +37,8 @@ public class GameState {
 
     private ArrayList<ArrayList<Position>> move_history;
     private ArrayList<ArrayList<Position>> checkpoint;
+    private ArrayList<Integer> move_times;
+
     private ArrayList<Position> effective_loc;
 
     /**
@@ -48,12 +50,15 @@ public class GameState {
         this.map = map;
         player_loc = map.getInit_player_loc();
         player = map.getInit_player();
-        undo = map.getUndoLimit().get();
+        if(map.getUndoLimit().isPresent()){
+            undo = map.getUndoLimit().get();
+        }
         box = map.getInit_box();
         box_loc = map.getInit_box_loc();
         effective_loc = map.getEffective_loc();
-        move_history = new ArrayList<ArrayList<Position>>();
-        checkpoint = new ArrayList<ArrayList<Position>>();
+        move_history = new ArrayList<>();
+        checkpoint = new ArrayList<>();
+        move_times = new ArrayList<>();
     }
 
     public GameState(){}
@@ -70,7 +75,7 @@ public class GameState {
         if (player.contains(id)) {
             return player_loc.get(player.indexOf(id));
         } else {
-            throw new NotImplementedException();
+            return(Position.of(-10000, -10000));
         }
     }
 
@@ -82,9 +87,7 @@ public class GameState {
     public @NotNull Set<Position> getAllPlayerPositions() {
         // TODO
        var player_loc_set = new HashSet<Position>();
-       for (Position i: player_loc){
-           player_loc_set.add(i);
-       }
+        player_loc_set.addAll(player_loc);
        return player_loc_set;
     }
 
@@ -143,7 +146,7 @@ public class GameState {
     public boolean isWin() {
 // TODO
         for (Position dest: getDestinations()){
-            if (box_loc.contains(dest) == false){
+            if (!box_loc.contains(dest)){
                 return false;
             }
         }
@@ -162,7 +165,7 @@ public class GameState {
 
     public void move(Position from, Position to) {
         // TODO
-        ArrayList<Position> move = new ArrayList<Position>();
+        ArrayList<Position> move = new ArrayList<>();
         move.add(from);
         move.add(to);
         if (player_loc.contains(from)){
@@ -185,10 +188,8 @@ public class GameState {
      */
     public void checkpoint() {
 
-        checkpoint.removeAll(checkpoint);
-        for (ArrayList<Position> check:move_history) {
-            checkpoint.add(check);
-        }
+        checkpoint.addAll(move_history);
+        move_times.add(move_history.size());
         move_history.removeAll(move_history);
     }
 
@@ -201,18 +202,22 @@ public class GameState {
      */
     public void undo() {
         // TODO
-        if(undo != 0){
-            for (ArrayList<Position> check : checkpoint) {
-                if (player_loc.contains(check.get(1))) {
-                    player_loc.set(player_loc.indexOf(check.get(1)), check.get(0));
-                } else if (box_loc.contains(check.get(1))) {
-                    box_loc.set(box_loc.indexOf(check.get(1)), check.get(0));
+        if (!checkpoint.isEmpty()){
+            for (int i = 0; i < move_times.get(move_times.size()-1); i++){
+                Position from = checkpoint.get(checkpoint.size()-1).get(1);
+                Position to = checkpoint.get(checkpoint.size()-1).get(0);
+                if (player_loc.contains(from)){
+                    player_loc.set(player_loc.indexOf(from), to);
                 }
+                else if (box_loc.contains(from)){
+                    box_loc.set(box_loc.indexOf(from), to);
+                }
+                checkpoint.remove(checkpoint.get(checkpoint.size()-1));
             }
-        }
-
-        if (undo > 0){
-            undo--;
+            move_times.remove(move_times.get(move_times.size()-1));
+            if (undo != -1){
+                undo--;
+            }
         }
     }
 

@@ -1,7 +1,6 @@
 package hk.ust.comp3021.game;
 
 import hk.ust.comp3021.entities.*;
-import hk.ust.comp3021.utils.NotImplementedException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -55,10 +54,8 @@ public class GameMap {
         //TODO
         this.maxWidth = maxWidth;
         this.maxHeight = maxHeight;
-        this.destinations = new HashSet<Position>();
-        for (Position i:destinations){
-            this.destinations.add(i);
-        }
+        this.destinations = new HashSet<>();
+        this.destinations.addAll(destinations);
         this.undoLimit = undoLimit;
     }
 
@@ -100,30 +97,29 @@ public class GameMap {
     public static GameMap parse(String mapText) {
         //TODO
         String[] extract = mapText.split("\n", 2);
-        String number = "";
+        StringBuilder number = new StringBuilder();
         for (char num:extract[0].toCharArray()){
             if (num >= '0' && num <= '9'){
-                number = number + num;
+                number.append(num);
             }
         }
-        System.out.println(number.length());
-        int limit = Integer.parseInt(number);
+        int limit = Integer.parseInt(number.toString());
         String map = extract[1];
         if (limit < -1){
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("invalid undo limit");
         }
-        ArrayList<Character> check = new ArrayList<Character>();
+        ArrayList<Character> check = new ArrayList<>();
         int box_num = 0;
         int box_dest_num = 0;
         String[] lines = map.split("\n");
         int height = lines.length;
-        HashSet<Position> dest_set = new HashSet<Position>();
-        ArrayList<Position> walls_set = new ArrayList<Position>();
-        ArrayList<Integer> init_player_set = new ArrayList<Integer>();
-        ArrayList<Position> init_player_loc_set= new ArrayList<Position>();
-        ArrayList<Integer> init_box_set = new ArrayList<Integer>();
-        ArrayList<Position> init_box_loc_set = new ArrayList<Position>();
-        ArrayList<Position> init_effective_loc = new ArrayList<Position>();
+        HashSet<Position> dest_set = new HashSet<>();
+        ArrayList<Position> walls_set = new ArrayList<>();
+        ArrayList<Integer> init_player_set = new ArrayList<>();
+        ArrayList<Position> init_player_loc_set= new ArrayList<>();
+        ArrayList<Integer> init_box_set = new ArrayList<>();
+        ArrayList<Position> init_box_loc_set = new ArrayList<>();
+        ArrayList<Position> init_effective_loc = new ArrayList<>();
 
         int width = -1;
 
@@ -138,24 +134,25 @@ public class GameMap {
                 if (line[i]==' ') {
                     boolean substring_all_spaces = true;
                     for (int j = i; j <line.length; j++){
-                        if (line[j]!=' '){
+                        if (line[j] != ' ') {
                             substring_all_spaces = false;
+                            break;
                         }
                     }
-                    if (substring_all_spaces == false){
+                    if (!substring_all_spaces){
                         start =false;
                     }
                 }
                 if (start){
                     counter++;
                 }
-                if (line[i] >= 'A' && line[i] <= 'Z' && check.indexOf(line[i]) == -1) {
+                if (line[i] >= 'A' && line[i] <= 'Z' && !check.contains(line[i])) {
                     init_player_set.add(Character.getNumericValue(line[i])-Character.getNumericValue('A'));
                     init_player_loc_set.add(Position.of(i, k));
                     check.add(line[i]);
                     init_effective_loc.add(Position.of(i,k));
-                } else if (line[i] >= 'A' && line[i] <= 'Z' && check.indexOf(line[i]) != -1) {
-                    throw new IllegalArgumentException();
+                } else if (line[i] >= 'A' && line[i] <= 'Z' && check.contains(line[i])) {
+                    throw new IllegalArgumentException("duplicate players detected in the map");
                 }
                 if (line[i] == '@') {
                     box_dest_num++;
@@ -180,26 +177,26 @@ public class GameMap {
                 width = counter;
             }
         }
-        for (int k = 0; k < height; k++) {
-            char[] line = lines[k].toCharArray();
-            for (int i = 0; i < line.length; i++) {
-                if (line[i] >= 'a' && line[i] <= 'z' && check.indexOf(Character.toUpperCase(line[i])) == -1){
-                    throw new IllegalArgumentException();
+        for (String s : lines) {
+            char[] line = s.toCharArray();
+            for (char c : line) {
+                if (c >= 'a' && c <= 'z' && !check.contains(Character.toUpperCase(c))) {
+                    throw new IllegalArgumentException("unmatched players");
                 }
             }
         }
         if (box_num!=box_dest_num){
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("mismatch destinations");
         }
         if (check.size()==0){
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("no player");
         }
         for (char i: check){
-            if (mapText.contains(String.valueOf(Character.toLowerCase(i)))==false){
-                throw new IllegalArgumentException();
+            if (!mapText.contains(String.valueOf(Character.toLowerCase(i)))){
+                throw new IllegalArgumentException("unmatched players");
             }
         }
-        ArrayList<Position> player_pos_sort = new ArrayList<Position>();
+
         for (int i = 0;i<init_player_set.size()-1;i++){
             for (int k = i+1; k < init_player_set.size();k++){
                 if (init_player_set.get(i)>init_player_set.get(k)){
@@ -264,11 +261,9 @@ public class GameMap {
                 init_player.add(p.getId());
                 init_player_loc.add(position);
             }
-            case Wall o -> {
-                walls.add(position);
-            }
+            case Wall ignored -> walls.add(position);
             default ->{}
-            };
+            }
     }
 
     /**
@@ -298,10 +293,8 @@ public class GameMap {
      */
     public Set<Integer> getPlayerIds() {
         //TODO
-        HashSet<Integer> player = new HashSet<Integer>();
-        for (int i:init_player){
-            player.add(i);
-        }
+        HashSet<Integer> player = new HashSet<>();
+        player.addAll(init_player);
         return player;
     }
 
@@ -339,10 +332,6 @@ public class GameMap {
 
     public ArrayList<Position> getInit_player_loc() {
         return init_player_loc;
-    }
-
-    public ArrayList<Position> getWalls() {
-        return walls;
     }
 
     public ArrayList<Position> getEffective_loc() {

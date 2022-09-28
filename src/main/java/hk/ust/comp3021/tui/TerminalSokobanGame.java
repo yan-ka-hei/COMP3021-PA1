@@ -1,14 +1,12 @@
 package hk.ust.comp3021.tui;
 
 
-import hk.ust.comp3021.actions.Action;
 import hk.ust.comp3021.actions.ActionResult;
 import hk.ust.comp3021.actions.Exit;
 import hk.ust.comp3021.game.AbstractSokobanGame;
 import hk.ust.comp3021.game.GameState;
 import hk.ust.comp3021.game.InputEngine;
 import hk.ust.comp3021.game.RenderingEngine;
-import hk.ust.comp3021.utils.NotImplementedException;
 
 /**
  * A Sokoban game running in the terminal.
@@ -36,7 +34,7 @@ public class TerminalSokobanGame extends AbstractSokobanGame {
         // TODO
         // Check the number of players
         if (gameState.getAllPlayerPositions().size() > 2){
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("TerminalSokobanGame only support at most two players.");
         }
     }
 
@@ -45,21 +43,24 @@ public class TerminalSokobanGame extends AbstractSokobanGame {
         // TODO
         renderingEngine.message("Sokoban game is ready.\n");
         renderingEngine.render(state);
-        renderingEngine.message("\nUndo Quota: "+String.valueOf(state.getUndoQuota().orElse(0))+"\n");
+        if(state.getUndoQuota().orElse(0) != -1){renderingEngine.message("\nUndo Quota: "+state.getUndoQuota().orElse(0)+"\n");}
+        else{renderingEngine.message("\nUnlimited\n");}
         while (true){
-            var action = processAction(inputEngine.fetchAction());
-            switch (action){
-                case ActionResult.Failed fail -> renderingEngine.message(fail.getReason());
-                case default -> {}
+            var actionResult = processAction(inputEngine.fetchAction());
+            if (actionResult instanceof ActionResult.Failed fail) {
+                renderingEngine.message(fail.getReason());
             }
             renderingEngine.render(state);
-            renderingEngine.message("\nUndo Quota: "+String.valueOf(state.getUndoQuota().orElse(0))+"\n");
-            if (action.getAction() instanceof Exit || shouldStop()){
+            if(state.getUndoQuota().orElse(0) != -1){renderingEngine.message("\nUndo Quota: "+state.getUndoQuota().orElse(0)+"\n");}
+            else{renderingEngine.message("\nUnlimited\n");}
+            if (actionResult.getAction() instanceof Exit || shouldStop()){
                 renderingEngine.message("Game exits.\n");
                 break;
             }
         }
-
+        if (state.isWin()){
+            renderingEngine.message("");
+        }
 
     }
 }

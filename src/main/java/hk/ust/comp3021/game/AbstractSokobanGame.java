@@ -5,15 +5,15 @@ import hk.ust.comp3021.actions.ActionResult;
 import hk.ust.comp3021.actions.Move;
 import hk.ust.comp3021.entities.Box;
 import hk.ust.comp3021.entities.Empty;
+import hk.ust.comp3021.entities.Player;
 import hk.ust.comp3021.entities.Wall;
-import hk.ust.comp3021.utils.NotImplementedException;
 import org.jetbrains.annotations.NotNull;
 
 import hk.ust.comp3021.actions.Exit;
 import hk.ust.comp3021.actions.Undo;
 import hk.ust.comp3021.actions.InvalidInput;
 
-import java.util.Optional;
+import java.util.Objects;
 
 /**
  * A base implementation of Sokoban Game.
@@ -32,10 +32,7 @@ public abstract class AbstractSokobanGame implements SokobanGame {
      */
     protected boolean shouldStop() {
         // TODO
-        if (state.isWin()){
-            return true;
-        }
-        return false;
+        return state.isWin();
     }
 
     /**
@@ -44,7 +41,10 @@ public abstract class AbstractSokobanGame implements SokobanGame {
      */
     protected ActionResult processAction(@NotNull Action action) {
         // TODO
-        ActionResult result = switch (action){
+        if (action instanceof Move m && Objects.requireNonNull(state.getPlayerPositionById(m.getInitiator())).x() == -10000 && Objects.requireNonNull(state.getPlayerPositionById(m.getInitiator())).y() == -10000){
+            return new ActionResult.Failed(action, "Player not found.");
+        }
+        return switch (action){
             case Move.Down d ->{
                 Position player_pos = state.getPlayerPositionById(d.getInitiator());
                 Position down = Position.of(player_pos.x(), player_pos.y()+1);
@@ -53,7 +53,7 @@ public abstract class AbstractSokobanGame implements SokobanGame {
                 }
                 else if(state.getEntity(down) instanceof Box){
                     Position check = Position.of(player_pos.x(), player_pos.y()+2);
-                    if (state.getEntity(check) instanceof Box || state.getEntity(check) instanceof Wall){
+                    if (state.getEntity(check) instanceof Box || state.getEntity(check) instanceof Wall || state.getEntity(check) instanceof Player){
                         yield new ActionResult.Failed(action,"Failed to push the box.\n");
                     }
 
@@ -88,7 +88,7 @@ public abstract class AbstractSokobanGame implements SokobanGame {
                 }
                 else if(state.getEntity(left) instanceof Box){
                     Position check = Position.of(player_pos.x()-2, player_pos.y());
-                    if (state.getEntity(check) instanceof Box || state.getEntity(check) instanceof Wall){
+                    if (state.getEntity(check) instanceof Box || state.getEntity(check) instanceof Wall || state.getEntity(check) instanceof Player){
                         yield new ActionResult.Failed(action,"Failed to push the box.\n");
                     }
                     else{
@@ -119,7 +119,7 @@ public abstract class AbstractSokobanGame implements SokobanGame {
                 }
                 else if(state.getEntity(right) instanceof Box){
                     Position check = Position.of(player_pos.x()+2, player_pos.y());
-                    if (state.getEntity(check) instanceof Box || state.getEntity(check) instanceof Wall){
+                    if (state.getEntity(check) instanceof Box || state.getEntity(check) instanceof Wall || state.getEntity(check) instanceof Player){
                         yield new ActionResult.Failed(action,"Failed to push the box.\n");
                     }
                     else{
@@ -150,7 +150,7 @@ public abstract class AbstractSokobanGame implements SokobanGame {
                 }
                 else if(state.getEntity(up) instanceof Box){
                     Position check = Position.of(player_pos.x(), player_pos.y()-2);
-                    if (state.getEntity(check) instanceof Box || state.getEntity(check) instanceof Wall){
+                    if (state.getEntity(check) instanceof Box || state.getEntity(check) instanceof Wall || state.getEntity(check) instanceof Player){
                         yield new ActionResult.Failed(action,"Failed to push the box.\n");
                     }
                     else{
@@ -173,9 +173,9 @@ public abstract class AbstractSokobanGame implements SokobanGame {
                 }
             }
 
-            case Exit e -> new ActionResult.Success(action);
+            case Exit ignored2 -> new ActionResult.Success(action);
 
-            case Undo u -> {
+            case Undo ignored1 -> {
                 if (state.getUndoQuota().orElse(0)==0){
                     yield new ActionResult.Failed(action, "You have run out of your undo quota.\n");
                 }
@@ -185,8 +185,7 @@ public abstract class AbstractSokobanGame implements SokobanGame {
                 }
             }
 
-            case InvalidInput invalidInput -> new ActionResult.Failed(action,"Invalid Input.\n");
+            case InvalidInput ignored -> new ActionResult.Failed(action,"Invalid Input.\n");
         };
-        return result;
     }
 }
