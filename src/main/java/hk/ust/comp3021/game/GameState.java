@@ -212,9 +212,9 @@ public class GameState {
                 else if (box_loc.contains(from)){
                     box_loc.set(box_loc.indexOf(from), to);
                 }
-                checkpoint.remove(checkpoint.get(checkpoint.size()-1));
+                checkpoint.remove(checkpoint.size()-1);
             }
-            move_times.remove(move_times.get(move_times.size()-1));
+            move_times.remove(move_times.size()-1);
             if (undo != -1){
                 undo--;
             }
