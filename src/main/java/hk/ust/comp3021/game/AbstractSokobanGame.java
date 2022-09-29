@@ -42,7 +42,7 @@ public abstract class AbstractSokobanGame implements SokobanGame {
     protected ActionResult processAction(@NotNull Action action) {
         // TODO
         if (action instanceof Move m && Objects.requireNonNull(state.getPlayerPositionById(m.getInitiator())).x() == -10000 && Objects.requireNonNull(state.getPlayerPositionById(m.getInitiator())).y() == -10000){
-            return new ActionResult.Failed(action, "Player not found.");
+            return new ActionResult.Failed(action, "Player not found.\n");
         }
         return switch (action){
             case Move.Down d ->{

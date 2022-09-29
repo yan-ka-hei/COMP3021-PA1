@@ -59,7 +59,7 @@ public class TerminalSokobanGame extends AbstractSokobanGame {
             }
         }
         if (state.isWin()){
-            renderingEngine.message("");
+            renderingEngine.message("You win.");
         }
 
     }
