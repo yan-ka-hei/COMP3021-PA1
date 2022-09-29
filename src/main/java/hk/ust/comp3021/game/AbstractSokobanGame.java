@@ -57,12 +57,16 @@ public abstract class AbstractSokobanGame implements SokobanGame {
                         yield new ActionResult.Failed(action,"Failed to push the box.\n");
                     }
 
-                    else{
+                    else if(state.getEntity(check) instanceof Empty){
                         state.move(down, Position.of(down.x(), down.y()+1));
                         state.move(player_pos, Position.of(player_pos.x(), player_pos.y()+1));
                         state.checkpoint();
                         System.out.println(state.getEntity(Position.of(down.x(), down.y()+1)));
                         yield new ActionResult.Success(action);
+                    }
+
+                    else{
+                        throw new IllegalArgumentException("This branch should not be reached");
                     }
                 }
 
@@ -76,7 +80,7 @@ public abstract class AbstractSokobanGame implements SokobanGame {
                     yield new ActionResult.Success(action);
                 }
                 else{
-                    yield new ActionResult.Failed(action,"na");
+                    throw new IllegalArgumentException("This branch should not be reached");
                 }
             }
 
@@ -91,11 +95,14 @@ public abstract class AbstractSokobanGame implements SokobanGame {
                     if (state.getEntity(check) instanceof Box || state.getEntity(check) instanceof Wall || state.getEntity(check) instanceof Player){
                         yield new ActionResult.Failed(action,"Failed to push the box.\n");
                     }
-                    else{
+                    else if(state.getEntity(check) instanceof Empty){
                         state.move(left, Position.of(left.x()-1, left.y()));
                         state.move(player_pos, Position.of(player_pos.x()-1, player_pos.y()));
                         state.checkpoint();
                         yield new ActionResult.Success(action);
+                    }
+                    else{
+                        throw new IllegalArgumentException("This branch should not be reached");
                     }
                 }
                 else if(state.getAllPlayerPositions().contains(left)){
@@ -107,7 +114,7 @@ public abstract class AbstractSokobanGame implements SokobanGame {
                     yield new ActionResult.Success(action);
                 }
                 else{
-                    yield new ActionResult.Failed(action,"na");
+                    yield new ActionResult.Failed(action,"This branch should not be reached");
                 }
             }
 
@@ -122,11 +129,14 @@ public abstract class AbstractSokobanGame implements SokobanGame {
                     if (state.getEntity(check) instanceof Box || state.getEntity(check) instanceof Wall || state.getEntity(check) instanceof Player){
                         yield new ActionResult.Failed(action,"Failed to push the box.\n");
                     }
-                    else{
+                    else if(state.getEntity(check) instanceof Empty){
                         state.move(right, Position.of(right.x()+1, right.y()));
                         state.move(player_pos, Position.of(player_pos.x()+1, player_pos.y()));
                         state.checkpoint();
                         yield new ActionResult.Success(action);
+                    }
+                    else{
+                        throw new IllegalArgumentException("This branch should not be reached");
                     }
                 }
                 else if(state.getAllPlayerPositions().contains(right)){
@@ -138,7 +148,7 @@ public abstract class AbstractSokobanGame implements SokobanGame {
                     yield new ActionResult.Success(action);
                 }
                 else{
-                    yield new ActionResult.Failed(action,"na");
+                    yield new ActionResult.Failed(action,"This branch should not be reached");
                 }
             }
 
@@ -153,11 +163,14 @@ public abstract class AbstractSokobanGame implements SokobanGame {
                     if (state.getEntity(check) instanceof Box || state.getEntity(check) instanceof Wall || state.getEntity(check) instanceof Player){
                         yield new ActionResult.Failed(action,"Failed to push the box.\n");
                     }
-                    else{
+                    else if(state.getEntity(check) instanceof Empty){
                         state.move(up, Position.of(up.x(), up.y()-1));
                         state.move(player_pos, Position.of(player_pos.x(), player_pos.y()-1));
                         state.checkpoint();
                         yield new ActionResult.Success(action);
+                    }
+                    else{
+                        yield new ActionResult.Failed(action,"This branch should not be reached");
                     }
                 }
                 else if(state.getAllPlayerPositions().contains(up)){
@@ -169,7 +182,7 @@ public abstract class AbstractSokobanGame implements SokobanGame {
                     yield new ActionResult.Success(action);
                 }
                 else{
-                    yield new ActionResult.Failed(action,"na");
+                    yield new ActionResult.Failed(action,"This branch should not be reached");
                 }
             }
 
