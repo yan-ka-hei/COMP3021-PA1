@@ -99,7 +99,7 @@ public class GameMap {
         String[] extract = mapText.split("\n", 2);
         StringBuilder number = new StringBuilder();
         for (char num:extract[0].toCharArray()){
-            if (num >= '0' && num <= '9'){
+            if (num >= '0' && num <= '9' || num == '-'){
                 number.append(num);
             }
         }
